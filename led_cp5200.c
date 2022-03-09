@@ -174,11 +174,22 @@ static int connect_device(cp5k2_device_conf_t *p, char *ip_addr, int port)
 
 	verbose_printf("Connecting server addr= %s, port= %d \n", ip_addr, port);
 
-    rc = connect(sockfd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
-    if ( -1 == rc ) {
-        error_printf("Connecting server at %s:%d failed!!\n", ip_addr, port);
-		close(sockfd);
-    }
+	//-- FIXME: 開機會失敗 先 delay 一下
+	int timeout_sec = 10;
+	while(timeout_sec--) {
+		rc = connect(sockfd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
+		if ( -1 == rc ) {
+			warn_printf("Trying [%d] connecting to server at %s:%d failed!! errno=%d, %s\n", timeout_sec, ip_addr, port, errno, strerror(errno));
+			sleep(1);
+			continue;
+		}
+		break;
+	}
+
+	if (rc < 0) {
+		error_puts("Failed to connect to LED Board!!\n");
+		return -1;
+	}
 
 	verbose_printf("Server connected ...\n");
 	return 0;
