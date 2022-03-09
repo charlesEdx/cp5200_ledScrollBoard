@@ -25,6 +25,59 @@
 
 #include "big5_strings.c"
 
+
+static void ledScroll_Detecting(unsigned ledID)
+{
+	cp5k2_text_cb_t txt;
+
+	//-----------------------------
+	//-- "辨識中..請勿跟車.." ＠ Lower Window
+	//-----------------------------
+	memset(&txt, 0, sizeof(cp5k2_text_cb_t));
+	txt.color = 0x00FFFF00;
+	txt.effect = 0x0B;	// left rolling
+	txt.speed = 2;
+	txt.text = big5_DETECTING;
+	txt.text_len = sizeof(big5_DETECTING);
+	cp5k2_write_pure_text(ledID, 1, &txt);
+}
+
+
+static void ledScroll_Maintaining(unsigned ledID)
+{
+	cp5k2_text_cb_t txt;
+
+	//-----------------------------
+	//-- "系統維護中..請刷卡.." ＠ Lower Window
+	//-----------------------------
+	memset(&txt, 0, sizeof(cp5k2_text_cb_t));
+	txt.color = 0x00FF00FF;
+	txt.effect = 0x0B;	// left rolling
+	txt.speed = 2;
+	txt.text = big5_MAINTAINING;
+	txt.text_len = sizeof(big5_MAINTAINING);
+	cp5k2_write_pure_text(ledID, 1, &txt);
+}
+
+
+static ledScroll_ShowPlateID(unsigned ledID, char *plateID)
+{
+	cp5k2_text_cb_t txt;
+
+	//-----------------------------
+	//-- 顯示 "車牌號碼" ＠ Lower Window
+	//-----------------------------
+	memset(&txt, 0, sizeof(cp5k2_text_cb_t));
+	txt.color = 0x000000FF;
+	txt.effect = 0x00;	// freeze still
+	txt.speed = 10;
+	txt.text = plateID;
+	txt.text_len = sizeof(plateID);
+	cp5k2_write_pure_text(ledID, 1, &txt);
+
+}
+
+
 int main(int argc, char *argv[])
 {
 	cp5k2_init();
@@ -39,6 +92,7 @@ int main(int argc, char *argv[])
 	//-----------------------------
 	//-- Splite 2 windows
 	//-----------------------------
+#if 1
 	cp5k2_wn_spec_t wn_spec[2], *p_wnspec;
 	p_wnspec = &wn_spec[0];
 	p_wnspec->XH = 0x00;	// x = 0
@@ -61,6 +115,7 @@ int main(int argc, char *argv[])
 	p_wnspec->HL = 16;
 	cp5k2_splite_window(dev_id, 2, wn_spec);
 	sleep(1);
+#endif
 
 	cp5k2_text_cb_t txt;
 	//-----------------------------
@@ -72,7 +127,8 @@ int main(int argc, char *argv[])
 	txt.text = big5_EDIMAX;
 	txt.text_len = sizeof(big5_EDIMAX);
 	cp5k2_write_pure_text(dev_id, 0, &txt);
-	// usleep(100*1000);
+	sleep(1);
+
 
 	//-----------------------------
 	//-- "車牌辨識" ＠ Upper Window
@@ -84,11 +140,29 @@ int main(int argc, char *argv[])
 	txt.text = big5_LPR;
 	txt.text_len = sizeof(big5_LPR);
 	cp5k2_write_pure_text(dev_id, 1, &txt);
-	// usleep(100*1000);
+	sleep(3);
 
-	//-- Save flash
-	//cp5k2_save_data(dev_id);
+	for (int i=0; i<5; i++) {
+		//-----------------------------
+		//-- "辨識中..請勿跟車.." ＠ Lower Window
+		//-----------------------------
+		ledScroll_Detecting(dev_id);
+		sleep(3);
 
+		//-----------------------------
+		//-- 顯示 "車牌號碼" ＠ Lower Window
+		//-----------------------------
+		ledScroll_ShowPlateID(dev_id, "AQX-3159");
+		sleep(5);
+
+		//-----------------------------
+		//-- "系統維護中..請刷卡.." ＠ Lower Window
+		//-----------------------------
+		ledScroll_Maintaining(dev_id);
+		sleep(3);
+		
+	}
+	
 
 	cp5k2_device_unregister(dev_id);
 	cp5k2_destroy();
