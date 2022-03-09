@@ -36,9 +36,6 @@ $(EXEC_TEST): $(OBJS_ALL)
 	@(echo "..... Succeeded!!")
 	@(echo "")
 
-
-
-# install:
 # 	./install_falldt.sh
 
 clean:
