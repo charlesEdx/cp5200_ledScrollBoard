@@ -39,7 +39,6 @@ int main(int argc, char *argv[])
 	//-----------------------------
 	//-- Splite 2 windows
 	//-----------------------------
-#if 1
 	cp5k2_wn_spec_t wn_spec[2], *p_wnspec;
 	p_wnspec = &wn_spec[0];
 	p_wnspec->XH = 0x00;	// x = 0
@@ -62,7 +61,6 @@ int main(int argc, char *argv[])
 	p_wnspec->HL = 16;
 	cp5k2_splite_window(dev_id, 2, wn_spec);
 	sleep(1);
-#endif
 
 	cp5k2_text_cb_t txt;
 	//-----------------------------

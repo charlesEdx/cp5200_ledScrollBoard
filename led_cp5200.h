@@ -31,7 +31,7 @@ exetern "C" {
 // #include <sys/shm.h>
 
 
-#define MAX_CP5K2_NUM			(8)
+#define MAX_CP5K2_NUM			(2)	// maximum 8
 #define MAX_CP5K2_WINDOWS		(8)
 
 typedef struct cp5k2_text_cb_s {

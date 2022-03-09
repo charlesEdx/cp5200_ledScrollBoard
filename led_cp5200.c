@@ -9,7 +9,7 @@
 
 #define LOG_INFO	1
 #define LOG_WARN	1
-#define LOG_DBG		1
+#define LOG_DBG		0
 #define LOG_VERBOSE	0
 #define LOG_FUNC	0
 #include "infile_debug.h"
@@ -202,14 +202,14 @@ int cp5k2_device_register(unsigned dev_id, char *ip_addr, int port, unsigned lon
 
 	p = &_dev_conf[dev_id];
 	if (p->used) {
-		pthread_mutex_destroy(&_mtx);
+		pthread_mutex_unlock(&_mtx);
 
 		warn_printf("Device id= %d is used.\n", dev_id);
 		return -1;
 	}
 
 	if (connect_device(p, ip_addr, port) < 0) {
-		pthread_mutex_destroy(&_mtx);
+		pthread_mutex_unlock(&_mtx);
 
 		error_printf("Connect device id= %d failed!!\n", dev_id);
 		return -1;
@@ -217,7 +217,7 @@ int cp5k2_device_register(unsigned dev_id, char *ip_addr, int port, unsigned lon
 
 	p->used = 1;
 
-	pthread_mutex_destroy(&_mtx);
+	pthread_mutex_unlock(&_mtx);
 
 	format_id_code(p, id_code);
 
@@ -244,14 +244,14 @@ int cp5k2_device_unregister(unsigned dev_id)
 
 	p = &_dev_conf[dev_id];
 	if (p->used) {
-		if (p->sockfd < 0) {
+		if (p->sockfd >= 0) {
 			close(p->sockfd);
 			p->sockfd = -1;
 		}
 	}
 	p->used = 0;
 
-	pthread_mutex_destroy(&_mtx);
+	pthread_mutex_unlock(&_mtx);
 
 	return 0;
 }
@@ -289,7 +289,7 @@ static int receive_response(cp5k2_device_conf_t *p)
 		warn_printf("Large response packet!!\n");
 	}
 
-	debug_printf("Response code= %02X ...\n", rbuf[12]);
+	// debug_printf("Response code= %02X ...\n", rbuf[12]);
 
 	return rc;
 }
@@ -315,7 +315,7 @@ int cp5k2_send_CC_command(unsigned dev_id, uint8_t *cc_data, unsigned cc_len)
 	unsigned buf_size = CP5K2_CMD_HEADER_LEN + cc_len + 2;
 	uint8_t *buf = (uint8_t *)malloc(buf_size);
 	assert(buf);
-	debug_printf("buf_size= %d\n", buf_size);
+	// debug_printf("buf_size= %d\n", buf_size);
 
 	// 包数据长度
 	format_CC_len(p, cc_len);
@@ -348,7 +348,7 @@ int cp5k2_send_CC_command(unsigned dev_id, uint8_t *cc_data, unsigned cc_len)
 	*p_send++ = chksum[0];
 	*p_send = chksum[1];
 
-	#if 1	// DBUG only
+	#if 0	// DBUG only
 	do {
 		uint8_t *d = buf;
 		printf("---- packet data dump, buf_size= %d  ------\n", buf_size);
