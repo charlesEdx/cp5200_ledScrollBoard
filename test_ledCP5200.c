@@ -26,7 +26,7 @@
 #include "big5_strings.c"
 
 
-static void ledScroll_Detecting(unsigned ledID)
+static int ledScroll_Detecting(unsigned ledID)
 {
 	cp5k2_text_cb_t txt;
 
@@ -39,11 +39,11 @@ static void ledScroll_Detecting(unsigned ledID)
 	txt.speed = 2;
 	txt.text = big5_DETECTING;
 	txt.text_len = sizeof(big5_DETECTING);
-	cp5k2_write_pure_text(ledID, 1, &txt);
+	return cp5k2_write_pure_text(ledID, 1, &txt);
 }
 
 
-static void ledScroll_Maintaining(unsigned ledID)
+static int ledScroll_Maintaining(unsigned ledID)
 {
 	cp5k2_text_cb_t txt;
 
@@ -56,11 +56,11 @@ static void ledScroll_Maintaining(unsigned ledID)
 	txt.speed = 2;
 	txt.text = big5_MAINTAINING;
 	txt.text_len = sizeof(big5_MAINTAINING);
-	cp5k2_write_pure_text(ledID, 1, &txt);
+	return cp5k2_write_pure_text(ledID, 1, &txt);
 }
 
 
-static ledScroll_ShowPlateID(unsigned ledID, char *plateID)
+static int ledScroll_ShowPlateID(unsigned ledID, char *plateID)
 {
 	cp5k2_text_cb_t txt;
 
@@ -73,7 +73,7 @@ static ledScroll_ShowPlateID(unsigned ledID, char *plateID)
 	txt.speed = 10;
 	txt.text = plateID;
 	txt.text_len = sizeof(plateID);
-	cp5k2_write_pure_text(ledID, 1, &txt);
+	return cp5k2_write_pure_text(ledID, 1, &txt);
 
 }
 
@@ -160,9 +160,9 @@ int main(int argc, char *argv[])
 		//-----------------------------
 		ledScroll_Maintaining(dev_id);
 		sleep(3);
-		
+
 	}
-	
+
 
 	cp5k2_device_unregister(dev_id);
 	cp5k2_destroy();

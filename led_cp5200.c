@@ -66,8 +66,6 @@ static void format_CC_len(cp5k2_device_conf_t *p, unsigned cc_len)
 {
 	unsigned len = cc_len & 0xFFFFu;
 
-	assert(p);
-
 	//-- 低位在前
 	p->cmd_header[13] = (uint8_t)(len & 0xFFu);
 
@@ -88,8 +86,6 @@ static void format_packet_len(cp5k2_device_conf_t *p, unsigned pkt_len)
 {
 	unsigned len = pkt_len & 0xFFFFu;
 
-	assert(p);
-
 	//-- 低位在前
 	p->cmd_header[4] = (uint8_t)(len & 0xFFu);
 
@@ -108,7 +104,6 @@ static void format_packet_len(cp5k2_device_conf_t *p, unsigned pkt_len)
 static void format_id_code(cp5k2_device_conf_t *p, unsigned long id_code)
 {
 	unsigned long code;
-	assert(p);
 
 	code = id_code;
 
@@ -325,7 +320,10 @@ int cp5k2_send_CC_command(unsigned dev_id, uint8_t *cc_data, unsigned cc_len)
 	//-- total size to send = header + CC_len + Chksum
 	unsigned buf_size = CP5K2_CMD_HEADER_LEN + cc_len + 2;
 	uint8_t *buf = (uint8_t *)malloc(buf_size);
-	assert(buf);
+	if (!buf) {
+		error_printf("malloc() failed!!\n");
+		return -1;
+	}
 	// debug_printf("buf_size= %d\n", buf_size);
 
 	// 包数据长度
@@ -341,17 +339,6 @@ int cp5k2_send_CC_command(unsigned dev_id, uint8_t *cc_data, unsigned cc_len)
 	memcpy(p_send, cc_data, cc_len);
 	p_send += cc_len;
 
-	#if 0	// DBUG only
-	do {
-		uint8_t *d = buf;
-		printf("---- packet data dump, buf_size= %d  ------\n", buf_size);
-		for (int i=0; i<buf_size-2; i++) {
-			printf("%02X ", *d++);
-		}
-		printf("\n");
-	} while(0);
-	#endif
-
 	//-- caluclate CheckSum
 	uint8_t chksum[2];
 	calculate_chksum(chksum, buf, cc_len);
@@ -359,21 +346,10 @@ int cp5k2_send_CC_command(unsigned dev_id, uint8_t *cc_data, unsigned cc_len)
 	*p_send++ = chksum[0];
 	*p_send = chksum[1];
 
-	#if 0	// DBUG only
-	do {
-		uint8_t *d = buf;
-		printf("---- packet data dump, buf_size= %d  ------\n", buf_size);
-		for (int i=0; i<buf_size; i++) {
-			printf("%02X ", *d++);
-		}
-		printf("\n");
-	} while(0);
-	#endif
-
 	//-- SEND CP5200 CC command
-	if (send(p->sockfd, buf, buf_size, 0) != buf_size) {
+	if (send(p->sockfd, buf, buf_size, MSG_NOSIGNAL) != buf_size) {
 		error_printf("Socket send failed!!\n");
-		free(buf);
+		if (buf) free(buf);
 		return -1;
 	}
 
@@ -456,7 +432,10 @@ int cp5k2_write_pure_text(unsigned dev_id, int window, cp5k2_text_cb_t *text_cb)
 	cp5k2_device_conf_t *conf;
 
 	conf = get_devce_conf(dev_id);
-	assert(conf);
+	if (!conf) {
+		error_printf("get_devce_conf() failed!!\n");
+		return -1;
+	}
 
 	uint8_t attr[] = {
 		0x12, /*[0] cmd id*/
@@ -471,7 +450,10 @@ int cp5k2_write_pure_text(unsigned dev_id, int window, cp5k2_text_cb_t *text_cb)
 	int attr_size = sizeof(attr);
 	int buf_size = attr_size + text_cb->text_len;
 	uint8_t *cc_buf = malloc(buf_size);
-	assert(cc_buf);
+	if (!cc_buf) {
+		error_printf("malloc() failed!!\n");
+		return -1;
+	}
 	uint8_t *p_send = cc_buf;
 
 	//-- set window
@@ -517,13 +499,19 @@ int cp5k2_splite_window(unsigned dev_id, int n_win, cp5k2_wn_spec_t *wn_spec)
 	cp5k2_device_conf_t *dev_conf;
 
 	dev_conf = get_devce_conf(dev_id);
-	assert(dev_conf);
+	if (!dev_conf) {
+		error_printf("get_devce_conf() failed!!\n");
+		return -1;
+	}
 
 	int wn_num = n_win;
 	int wn_spec_size = sizeof(cp5k2_wn_spec_t);
 	int cc_len = 1 + 1 + (wn_num * wn_spec_size);
 	uint8_t *cc_data = (uint8_t *)malloc(cc_len);
-	assert(cc_data);
+	if (!cc_data) {
+		error_printf("malloc() failed!!\n");
+		return -1;
+	}
 
 	cp5k2_cmd_splite_windows_t *cmd_splite = (cp5k2_cmd_splite_windows_t *)cc_data;
 	cmd_splite->cc_id = 0x01;
@@ -545,9 +533,6 @@ int cp5k2_splite_window(unsigned dev_id, int n_win, cp5k2_wn_spec_t *wn_spec)
 int cp5k2_save_data(unsigned dev_id)
 {
 	cp5k2_device_conf_t *dev_conf;
-
-	dev_conf = get_devce_conf(dev_id);
-	assert(dev_conf);
 
 	uint8_t	cc_data[4] = {
 		0x07,	/*[0]cc_cmd=0x07 请求控制卡保存各窗口的数据*/
